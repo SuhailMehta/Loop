@@ -1,0 +1,58 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!--
+      Foreground location only.
+
+      ACCESS_COARSE is declared alongside FINE because Android 12+ lets the user
+      grant only approximate location; without it the dialog cannot offer that
+      choice and a privacy-conscious user is forced to all-or-nothing.
+
+      ACCESS_BACKGROUND_LOCATION and a foregroundServiceType="location" service
+      are deliberately NOT declared: background sharing is specified in the HLD
+      but not implemented, and asking for a permission the app cannot yet honour
+      is both a review risk and a trust cost.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!--
+      Background tracking.
+
+      FOREGROUND_SERVICE_LOCATION is the Android 14+ typed variant; the platform
+      rejects a location-typed service without it. POST_NOTIFICATIONS is needed
+      on 13+ because the ongoing notification IS the contract under which the
+      platform grants continued location access.
+    -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+      android:name=".MainApplication"
+      android:label="@string/app_name"
+      android:icon="@mipmap/ic_launcher"
+      android:roundIcon="@mipmap/ic_launcher_round"
+      android:allowBackup="false"
+      android:theme="@style/AppTheme"
+      android:usesCleartextTraffic="${usesCleartextTraffic}"
+      android:supportsRtl="true">
+      <activity
+        android:name=".MainActivity"
+        android:label="@string/app_name"
+        android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
+        android:launchMode="singleTask"
+        android:windowSoftInputMode="adjustResize"
+        android:exported="true">
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+      </activity>
+      <service
+        android:name=".source.LocationForegroundService"
+        android:foregroundServiceType="location"
+        android:exported="false" />
+    </application>
+</manifest>

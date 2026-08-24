@@ -1,0 +1,33 @@
+{
+  "extends": "@react-native/typescript-config",
+  "compilerOptions": {
+    "paths": {
+      // RN 0.87 ships CodegenTypesNamespace.d.ts but no CodegenTypes.d.ts,
+      // while codegen requires specs to import from the latter path. Map it so
+      // tsc resolves the types without changing the specifier codegen parses.
+      "react-native/Libraries/Types/CodegenTypes": [
+        "./node_modules/react-native/Libraries/Types/CodegenTypesNamespace.d.ts"
+      ],
+      // Same story as CodegenTypes: the .d.ts exists but RN's exports map does
+      // not resolve it extensionless, so codegen's own required import path
+      // fails typecheck without a mapping.
+      "react-native/Libraries/Utilities/codegenNativeComponent": [
+        "./node_modules/react-native/Libraries/Utilities/codegenNativeComponent.d.ts"
+      ],
+      "react-native/Libraries/Utilities/codegenNativeCommands": [
+        "./node_modules/react-native/Libraries/Utilities/codegenNativeCommands.d.ts"
+      ],
+      "@design": ["./src/design"],
+      "@design/*": ["./src/design/*"],
+      "@geo": ["./src/geo"],
+      "@geo/*": ["./src/geo/*"],
+      "@kits/*": ["./src/kits/*"]
+    },
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "verbatimModuleSyntax": false
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["**/node_modules", "**/Pods", "**/build"]
+}

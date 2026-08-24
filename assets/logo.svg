@@ -1,0 +1,14 @@
+<svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Loop mark: an open ring (the route) with two dots on it (friends
+       sharing it). One accent colour, two sizes — identity is read by
+       position on the loop, the same principle the map itself now uses. -->
+  <path
+    d="M 66 22.29 A 32 32 0 1 1 34 22.29"
+    stroke="#2F80FF"
+    stroke-width="9"
+    stroke-linecap="round"
+    fill="none"
+  />
+  <circle cx="66" cy="77.71" r="7.5" fill="#2F80FF" />
+  <circle cx="22.29" cy="66" r="5" fill="#2F80FF" />
+</svg>
