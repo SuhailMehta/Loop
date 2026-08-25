@@ -28,6 +28,7 @@ import type {
 } from '@maplibre/maplibre-react-native';
 import { scale } from '../tokens/semantic';
 import type { SemanticTokens } from '../tokens/semantic';
+import { identityColor } from '../identity';
 
 type CirclePaint = CircleLayerSpecification['paint'];
 type LinePaint = LineLayerSpecification['paint'];
@@ -43,15 +44,39 @@ type SymbolLayout = SymbolLayerSpecification['layout'];
 const expr = (e: unknown[]): ExpressionSpecification => e as unknown as ExpressionSpecification;
 
 /**
- * One colour for every friend. Who's who is answered by the Friends list, not
- * by hue — a legend of thirty swatches asks more of the eye than a name does.
+ * Colour driven by IDENTITY, not status.
  *
- * Self still overrides it: "which one is me" is a real distinction worth its
- * own colour, "which friend is this" is answered by tapping or reading the
- * list instead.
+ * `variant` is an opaque integer the source assigns per entity — unique per
+ * entity, not wrapped to a small size (see MockSource.ts) — mapped onto a
+ * colour via `identityColor`, the same function the Friends list and the
+ * entity sheet call directly for their own avatar and dot. That shared
+ * source is what makes colour usable as identity at all — a separate
+ * floating legend explaining a colour key was the earlier failure mode; a
+ * list that already pairs every name with its colour needs no separate key.
+ *
+ * GPU `match` expressions need a static table, not a live function call, so
+ * this precomputes one entry per variant up to `VARIANT_TABLE_SIZE` — well
+ * past any cardinality this demo runs at — using the identical formula
+ * `identityColor` uses, so a value outside the table (which nothing here
+ * produces) and a value inside it are never in danger of disagreeing.
+ *
+ * Self overrides identity: "which one is me" beats "which one is this friend".
  */
-function pinColour(t: SemanticTokens): ExpressionSpecification {
-  return expr(['case', ['==', ['get', 'freshness'], 'self'], t.map.entity.self, t.map.entity.fresh]);
+const VARIANT_TABLE_SIZE = 256;
+
+function identityColour(t: SemanticTokens): ExpressionSpecification {
+  const match: unknown[] = ['match', ['get', 'variant']];
+  for (let i = 0; i < VARIANT_TABLE_SIZE; i++) {
+    match.push(i, identityColor(t, i));
+  }
+  match.push(identityColor(t, 0)); // fallback for a variant beyond the table
+
+  return expr([
+    'case',
+    ['==', ['get', 'freshness'], 'self'],
+    t.map.entity.self,
+    match,
+  ]);
 }
 
 /**
@@ -96,7 +121,7 @@ function freshnessStroke(t: SemanticTokens): ExpressionSpecification {
  */
 export function entityCirclePaint(t: SemanticTokens): CirclePaint {
   return {
-    'circle-color': pinColour(t),
+    'circle-color': identityColour(t),
     'circle-opacity': freshnessOpacity(),
     'circle-stroke-color': freshnessStroke(t),
     'circle-stroke-width': scale.mark.pinStrokeWidth,
@@ -112,6 +137,35 @@ export function entityCirclePaint(t: SemanticTokens): CirclePaint {
       scale.mark.pinRadius,
       18,
       scale.mark.pinRadius * 1.4,
+    ]),
+    'circle-pitch-alignment': 'map',
+  };
+}
+
+/**
+ * Halo — the default surround for every pin, not a selection-only state.
+ *
+ * A soft wash of the entity's own identity colour plus a dark outline ring,
+ * underneath the solid dot. Gives every pin the same "target" read at rest
+ * that used to appear only once tapped; the selection ring (`highlightPaint`)
+ * still layers a second, brighter ring on top for whichever one is selected.
+ */
+export function entityHaloPaint(t: SemanticTokens): CirclePaint {
+  return {
+    'circle-color': identityColour(t),
+    'circle-opacity': 0.28,
+    'circle-stroke-color': t.text.primary,
+    'circle-stroke-width': 1.5,
+    'circle-radius': expr([
+      'interpolate',
+      ['linear'],
+      ['zoom'],
+      10,
+      scale.mark.pinRadius * 0.7 * 2.2,
+      14,
+      scale.mark.pinRadius * 2.2,
+      18,
+      scale.mark.pinRadius * 1.4 * 2.2,
     ]),
     'circle-pitch-alignment': 'map',
   };
@@ -193,7 +247,7 @@ export function selfCirclePaint(t: SemanticTokens): CirclePaint {
  */
 export function bearingSymbolLayout(): SymbolLayout {
   return {
-    'icon-image': 'geokit-bearing',
+    'icon-image': 'loop-bearing',
     'icon-rotate': expr(['get', 'bearing']),
     'icon-rotation-alignment': 'map',
     'icon-allow-overlap': true,

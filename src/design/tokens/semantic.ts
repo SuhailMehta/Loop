@@ -9,7 +9,7 @@
  * single constraint is what stops themes drifting apart over a project's life.
  */
 
-import { identityPalette, mark, motion, opacity, palette, radius, space, typography } from './primitives';
+import { mark, motion, opacity, palette, radius, space, typography } from './primitives';
 
 export type ThemeName = 'light' | 'dark';
 
@@ -69,14 +69,6 @@ export interface SemanticTokens {
       stroke: string;
     };
 
-    /**
-     * Per-person identity colours, indexed by an opaque `hue` attribute.
-     *
-     * Identity is the thing a user actually tracks on this map. Freshness moves
-     * to opacity so the two signals occupy different channels and never
-     * compete — hue answers "who", opacity answers "how current".
-     */
-    identity: readonly string[];
     /** Outline for a stale pin, so age reads even where opacity is subtle. */
     staleStroke: string;
 
@@ -148,7 +140,6 @@ export const lightTheme: SemanticTokens = {
       // the stroke separates overlapping pins from each other.
       stroke: palette.neutral[0],
     },
-    identity: identityPalette.light,
     staleStroke: palette.amber[500],
     trail: {
       head: palette.blue[500],
@@ -200,7 +191,6 @@ export const darkTheme: SemanticTokens = {
       self: palette.green[300],
       stroke: palette.neutral[1000],
     },
-    identity: identityPalette.dark,
     staleStroke: palette.amber[300],
     trail: {
       head: palette.blue[300],

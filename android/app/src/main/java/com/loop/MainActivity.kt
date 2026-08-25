@@ -1,4 +1,4 @@
-package com.geokit
+package com.loop
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

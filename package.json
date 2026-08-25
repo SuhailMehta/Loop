@@ -1,5 +1,5 @@
 {
-  "name": "GeoKit",
+  "name": "Loop",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -16,11 +16,11 @@
     "release": "npm run release:build && npm run release:install"
   },
   "codegenConfig": {
-    "name": "GeoKitSpec",
+    "name": "LoopSpec",
     "type": "modules",
     "jsSrcsDir": "src/specs",
     "android": {
-      "javaPackageName": "com.geokit.specs"
+      "javaPackageName": "com.loop.specs"
     }
   },
   "dependencies": {

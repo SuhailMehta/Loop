@@ -130,8 +130,8 @@ ways:
 #### [TrackBuffer](../src/geo/kernel/TrackBuffer.ts)
 #### [MockSource (JS provider)](../src/geo/sources/MockSource.ts)
 #### [NativeTurboSource (bridge adapter)](../src/geo/sources/NativeTurboSource.ts)
-#### [GeoKitSourceModule (native provider)](../android/app/src/main/java/com/geokit/source/GeoKitSourceModule.kt)
-#### [TurboModule spec (frozen contract)](../src/specs/NativeGeoKitSource.ts)
+#### [LoopSourceModule (native provider)](../android/app/src/main/java/com/loop/source/LoopSourceModule.kt)
+#### [TurboModule spec (frozen contract)](../src/specs/NativeLoopSource.ts)
 #### [live-entities kit](../src/kits/live-entities/)
 #### [venue-zones kit](../src/kits/venue-zones/)
 #### [Design token → MapLibre adapter](../src/design/adapters/maplibre.ts)
@@ -164,7 +164,7 @@ ways:
 8. **LiveEntitiesKit** and **VenueZonesKit** sit at Tier 3, the only place domain vocabulary
    (people, routes, venues) is allowed to exist. Both are built entirely out of kernel
    primitives.
-9. **GeoKitSourceModule** (Kotlin) is the native half of `NativeTurboSource`: a TurboModule
+9. **LoopSourceModule** (Kotlin) is the native half of `NativeTurboSource`: a TurboModule
    with its own scheduler thread, emitting batched fixes across the JSI boundary under
    credit-gated backpressure.
 10. The **token adapter** (`adapters/maplibre.ts`) is the second consumer of the design
@@ -226,12 +226,12 @@ src/
     live-entities/          points + trails
     venue-zones/            static polygons
 
-  specs/NativeGeoKitSource.ts   TurboModule codegen spec (the frozen native contract)
+  specs/NativeLoopSource.ts   TurboModule codegen spec (the frozen native contract)
   ui/Hud.tsx                    performance/diagnostic overlay
 
-android/app/src/main/java/com/geokit/source/
-  GeoKitSourceModule.kt     native synthetic source on a dedicated thread
-  GeoKitSourcePackage.kt    BaseReactPackage — the swap mechanism
+android/app/src/main/java/com/loop/source/
+  LoopSourceModule.kt     native synthetic source on a dedicated thread
+  LoopSourcePackage.kt    BaseReactPackage — the swap mechanism
 
 scripts/check-tiers.sh      CI enforcement of the rules above
 ```
@@ -380,7 +380,7 @@ for the pressure signal, and a blocking-synchronous `getCapabilities()`.
 ### 7.5 Native module lifecycle
 
 `TurboModuleRegistry.get()` gets resolved lazily, on first use inside
-`getNativeGeoKitSource()`, instead of at module-evaluation time. Under the bridgeless New
+`getNativeLoopSource()`, instead of at module-evaluation time. Under the bridgeless New
 Architecture, native module registration and JS module evaluation aren't guaranteed to
 happen in any particular order relative to each other. Resolving eagerly at import time can
 race that registration, and if the miss got cached, the native source would simply be
@@ -397,7 +397,7 @@ smooth.
 
 ```
   NATIVE SOURCE THREAD           JS THREAD                    NATIVE UI THREAD
-  (geokit-native-source)                                      (render)
+  (loop-native-source)                                      (render)
   ┌─────────────────────┐   ┌─────────────────────────┐   ┌──────────────────┐
   │ ScheduledExecutor   │   │ SourceSink.emit         │   │ MapLibre GL      │
   │ fixed rate, daemon  │   │        │                │   │ style expressions│
@@ -601,7 +601,7 @@ intent instead of a null one — it comes back configured rather than inert.
 `startForegroundService()` only enqueues the start and returns right away. The actual
 promotion happens later, asynchronously, inside the service's own `onStartCommand`, on a
 different call stack entirely. A try/catch at the call site
-(`GeoKitSourceModule.startBackgroundTracking`) can't see a failure that only shows up over
+(`LoopSourceModule.startBackgroundTracking`) can't see a failure that only shows up over
 there — the boundary that matters is inside `onStartCommand`, around the `startForeground()`
 call itself, not around whatever triggers it.
 
@@ -743,7 +743,7 @@ describe configuration; commands describe things that happen.
 | 1 | Codegen the component; confirm generated `LiveMapViewManagerDelegate` | low |
 | 2 | `LiveMapViewManager : SimpleViewManager<LiveMapView>` wrapping `org.maplibre.android.maps.MapView` | low |
 | 3 | Style and layer setup in Kotlin — circle layer, identity palette by `variant`, opacity by freshness | medium: mirrors the token adapter's output |
-| 4 | `NativeEntityStore`: gates, ring buffers, freshness. `GeoKitSourceModule` writes into it rather than emitting | medium |
+| 4 | `NativeEntityStore`: gates, ring buffers, freshness. `LoopSourceModule` writes into it rather than emitting | medium |
 | 5 | Render on `Choreographer.FrameCallback`; per-marker updates through the annotation manager | **high — the core of the component** |
 | 6 | Lifecycle: `onStart/onResume/onPause/onStop/onDestroy/onSaveInstanceState` forwarded from the ViewManager | **high** |
 | 7 | Fabric view recycling: implement `prepareForRecycle` | **high** |

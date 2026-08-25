@@ -71,12 +71,6 @@ export interface AgentGroup {
 
 const TEAMS = ['red', 'blue', 'green', 'amber'];
 
-/**
- * How many distinct variants a kit can expect. Matches the identity palette
- * size; beyond eight, hues stop being tellable apart at pin size.
- */
-const VARIANT_COUNT = 8;
-
 /** A polyline with cumulative distances precomputed, so lookups are O(segments). */
 interface PreparedRoute {
   points: readonly Position[];
@@ -321,7 +315,10 @@ export function createMockSource(options: Partial<MockSourceOptions> = {}): Sour
       team: TEAMS[teamIndex % TEAMS.length] as string,
       label,
       extra,
-      variant: teamIndex % VARIANT_COUNT,
+      // Unique per entity, not wrapped to a small palette size — identity
+      // colour has to be generated with room for as many people as the
+      // roster actually has, or it starts repeating well before 32.
+      variant: teamIndex,
       targetLng: p[0],
       targetLat: p[1],
       route,
@@ -409,7 +406,7 @@ export function createMockSource(options: Partial<MockSourceOptions> = {}): Sour
         team: TEAMS[i % TEAMS.length] as string,
         label: opts.labels?.[i] ?? `#${i + 1}`,
         extra: {},
-        variant: i % VARIANT_COUNT,
+        variant: i,
         targetLng: lng,
         targetLat: lat,
         route,

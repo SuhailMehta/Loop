@@ -18,7 +18,7 @@
 import React from 'react';
 import { Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { scale, useTokens } from '@design';
+import { identityColor, scale, useTokens } from '@design';
 
 export interface SelectedEntity {
   id: string;
@@ -27,7 +27,7 @@ export interface SelectedEntity {
   label: string;
   /** From event registration — 'racer' or 'supporter'. */
   participation: string;
-  /** Opaque per-entity discriminator the source assigns; unused by this sheet. */
+  /** Opaque per-entity discriminator the source assigns; indexes the identity palette. */
   variant: number;
   isSelf: boolean;
   persona: string;
@@ -123,9 +123,9 @@ export function EntitySheet({ entity, selfPosition, bib, onClose }: EntitySheetP
       ? formatDistance(distanceM(selfPosition.lng, selfPosition.lat, entity.lng, entity.lat))
       : null;
 
-  // Same colour the pin uses — "you" stays visually distinct, every friend
-  // shares one colour and is told apart by name instead.
-  const accent = isSelf ? tokens.map.entity.self : tokens.map.entity.fresh;
+  // Same colour the pin and the Friends list row use for this person —
+  // identityColor(variant) is the one mapping every surface reads from.
+  const accent = isSelf ? tokens.map.entity.self : identityColor(tokens, entity.variant);
 
   // Spelled out in words, because a colour alone does not tell a user why this
   // person is moving at 3.6 m/s down the middle of a park.

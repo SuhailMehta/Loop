@@ -13,7 +13,7 @@
  * practice, and `git diff src/geo/kernel src/kits` across the swap is empty.
  */
 
-import { getNativeGeoKitSource } from '../../specs/NativeGeoKitSource';
+import { getNativeLoopSource } from '../../specs/NativeLoopSource';
 import type { EntityFix } from '../kernel/types';
 import type { Source, SourceCapabilities, SourceConfig, SourceSink } from '../ports/Source';
 
@@ -21,7 +21,7 @@ export const NATIVE_SOURCE_ID = 'native-turbo';
 
 /** True when the native provider is linked into this build. */
 export function isNativeSourceAvailable(): boolean {
-  return getNativeGeoKitSource() != null;
+  return getNativeLoopSource() != null;
 }
 
 export interface NativeSourceOptions {
@@ -58,7 +58,7 @@ export const DEFAULT_NATIVE_OPTIONS: NativeSourceOptions = {
  */
 export function startBackgroundTracking(title: string, body: string): boolean {
   try {
-    return getNativeGeoKitSource()?.startBackgroundTracking(title, body) ?? false;
+    return getNativeLoopSource()?.startBackgroundTracking(title, body) ?? false;
   } catch {
     return false;
   }
@@ -66,7 +66,7 @@ export function startBackgroundTracking(title: string, body: string): boolean {
 
 export function stopBackgroundTracking(): void {
   try {
-    getNativeGeoKitSource()?.stopBackgroundTracking();
+    getNativeLoopSource()?.stopBackgroundTracking();
   } catch {
     // Already stopped, or the module is gone.
   }
@@ -75,7 +75,7 @@ export function stopBackgroundTracking(): void {
 /** Persist last-known positions outside the JS heap. */
 export function saveSnapshot(fixes: readonly EntityFix[]): void {
   try {
-    getNativeGeoKitSource()?.saveSnapshot(JSON.stringify(fixes));
+    getNativeLoopSource()?.saveSnapshot(JSON.stringify(fixes));
   } catch {
     // Persistence is best-effort; failing to save must never break tracking.
   }
@@ -83,7 +83,7 @@ export function saveSnapshot(fixes: readonly EntityFix[]): void {
 
 export function loadSnapshot(): EntityFix[] {
   try {
-    const raw = getNativeGeoKitSource()?.loadSnapshot() ?? '';
+    const raw = getNativeLoopSource()?.loadSnapshot() ?? '';
     if (!raw) {
       return [];
     }
@@ -115,7 +115,7 @@ export type MemoryPressureLevel = 'moderate' | 'critical';
 export function subscribeToMemoryPressure(
   onPressure: (level: MemoryPressureLevel) => void,
 ): () => void {
-  const native = getNativeGeoKitSource();
+  const native = getNativeLoopSource();
   if (!native) {
     return () => {};
   }
@@ -141,7 +141,7 @@ export function createNativeTurboSource(options: Partial<NativeSourceOptions> = 
     volatility: 'kinetic',
 
     capabilities(): SourceCapabilities {
-      const native = getNativeGeoKitSource();
+      const native = getNativeLoopSource();
       if (!native) {
         return {
           sourceId: NATIVE_SOURCE_ID,
@@ -166,12 +166,12 @@ export function createNativeTurboSource(options: Partial<NativeSourceOptions> = 
     },
 
     start(_config: SourceConfig, sink: SourceSink): void {
-      const native = getNativeGeoKitSource();
+      const native = getNativeLoopSource();
       if (!native) {
         sink.error({
           code: 'unsupported',
           message:
-            'NativeGeoKitSource is not linked into this build. Add GeoKitSourcePackage, or fall back to the JS source.',
+            'NativeLoopSource is not linked into this build. Add LoopSourcePackage, or fall back to the JS source.',
           recoverable: false,
         });
         return;
@@ -232,7 +232,7 @@ export function createNativeTurboSource(options: Partial<NativeSourceOptions> = 
     },
 
     stop(): void {
-      getNativeGeoKitSource()?.stop();
+      getNativeLoopSource()?.stop();
       subscription?.remove();
       subscription = null;
     },

@@ -80,9 +80,42 @@ export function LiveEntitiesLayers({
       if (!onSelect) {
         return;
       }
-      const feature = event.nativeEvent.features?.[0];
-      const geometry = feature?.geometry;
 
+      // pin, self, highlight and label all read the SAME points source, so a
+      // tap near two close-together entities can return several features —
+      // one per layer it's present in, not one per entity, and not sorted by
+      // distance. Taking `features[0]` picked whichever layer happened to
+      // enumerate first, which could be the neighbour rather than the one
+      // actually tapped. `lngLat` is the real tap point; use it to pick the
+      // nearest UNIQUE entity among the candidates instead of trusting order.
+      const { features, lngLat } = event.nativeEvent;
+      const [tapLng, tapLat] = lngLat;
+      let feature: GeoJSON.Feature | undefined;
+      let bestDistSq = Infinity;
+      const seen = new Set<string>();
+
+      for (const candidate of features ?? []) {
+        if (candidate.geometry?.type !== 'Point') {
+          continue;
+        }
+        const id = String(candidate.id ?? '');
+        if (id && seen.has(id)) {
+          continue;
+        }
+        if (id) {
+          seen.add(id);
+        }
+        const [clng, clat] = candidate.geometry.coordinates as [number, number];
+        const dLng = clng - tapLng;
+        const dLat = clat - tapLat;
+        const distSq = dLng * dLng + dLat * dLat;
+        if (distSq < bestDistSq) {
+          bestDistSq = distSq;
+          feature = candidate;
+        }
+      }
+
+      const geometry = feature?.geometry;
       if (!feature || !geometry || geometry.type !== 'Point') {
         onSelect(null);
         return;
@@ -155,12 +188,32 @@ export function LiveEntitiesLayers({
           runners or selves; the kit decides what those tags mean visually.
         */}
         {/*
-          ONE layer for every friend, one uniform colour.
+          Halo — every circle's default surround, not just the selected
+          one's. Drawn under the dot for everyone, self included, so it
+          reads as the pin's own resting state rather than a selection cue.
+        */}
+        <Layer
+          id="live-entities/halo"
+          type="circle"
+          filter={
+            [
+              'all',
+              ['!=', ['get', 'cluster'], true],
+              ...(visibilityTerm ? [visibilityTerm] : []),
+            ] as never
+          }
+          paint={mapStyles.entityHaloPaint(tokens)}
+        />
 
-          Who's who is answered by the Friends list, not by hue — a colour
-          scheme runs out of distinguishable steps long before a name does.
-          Whether someone is racing is answered in words on tap, same as
-          before.
+        {/*
+          ONE layer for every friend.
+
+          Colour encodes IDENTITY (via the opaque `variant` attribute), and
+          the same mapping is used for that person's avatar in the Friends
+          list — so the colour is never presented without the name it means,
+          which is what makes it readable without a separate legend.
+          Whether someone is racing is answered in words on tap, because it
+          is a fact about them rather than a visual category worth a hue.
         */}
         <Layer
           id="live-entities/pin"

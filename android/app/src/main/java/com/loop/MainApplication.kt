@@ -1,4 +1,4 @@
-package com.geokit
+package com.loop
 
 import android.app.Application
 import com.facebook.react.PackageList
@@ -6,8 +6,8 @@ import com.facebook.react.ReactApplication
 import com.facebook.react.ReactHost
 import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
-import com.geokit.source.GeoKitSourceModule
-import com.geokit.source.GeoKitSourcePackage
+import com.loop.source.LoopSourceModule
+import com.loop.source.LoopSourcePackage
 
 class MainApplication : Application(), ReactApplication {
 
@@ -22,7 +22,7 @@ class MainApplication : Application(), ReactApplication {
           // adds it to PackageList automatically and this line disappears —
           // installing/uninstalling the package becomes the entire swap. It is
           // explicit here only because the provider lives in this repo.
-          add(GeoKitSourcePackage())
+          add(LoopSourcePackage())
         },
     )
   }
@@ -46,6 +46,6 @@ class MainApplication : Application(), ReactApplication {
    */
   override fun onTrimMemory(level: Int) {
     super.onTrimMemory(level)
-    GeoKitSourceModule.notifyTrimMemory(level)
+    LoopSourceModule.notifyTrimMemory(level)
   }
 }

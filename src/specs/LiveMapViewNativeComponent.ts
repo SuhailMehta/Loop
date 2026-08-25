@@ -20,7 +20,7 @@
  *
  * NOTE WHAT IS ABSENT FROM THESE PROPS: no positions, no FeatureCollection, no
  * geometry of any kind. Entities reach this view from the native store that
- * GeoKitSourceModule writes into, on the native side. JS sets configuration and
+ * LoopSourceModule writes into, on the native side. JS sets configuration and
  * issues commands; coordinates never cross. That is the entire point, and it is
  * why the prop list is this short.
  */

@@ -11,6 +11,7 @@ import * as mapStyles from './adapters/maplibre';
 export { ThemeProvider, useTheme, useTokens, makeStyles } from './ThemeProvider';
 export { themes, lightTheme, darkTheme, scale } from './tokens/semantic';
 export type { SemanticTokens, ThemeName } from './tokens/semantic';
+export { identityColor } from './identity';
 
 // Namespaced rather than `export * as` — that syntax needs
 // @babel/plugin-transform-export-namespace-from, which React Native's preset

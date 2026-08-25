@@ -1,4 +1,4 @@
-package com.geokit.source
+package com.loop.source
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -42,7 +42,7 @@ class LocationForegroundService : Service() {
      *
      * The two calls are not on the same synchronous stack: `startForegroundService`
      * only enqueues the start and returns immediately, so a try/catch at that
-     * call site (in `GeoKitSourceModule.startBackgroundTracking`) cannot see a
+     * call site (in `LoopSourceModule.startBackgroundTracking`) cannot see a
      * failure that surfaces later, here, when the OS actually delivers the
      * command. Android 12+ additionally requires the app to be in an "eligible"
      * state — recently foregrounded — to promote a location-typed service; a
@@ -60,7 +60,7 @@ class LocationForegroundService : Service() {
             startForeground(NOTIFICATION_ID, buildNotification(title, body))
             START_REDELIVER_INTENT
         } catch (t: Throwable) {
-            android.util.Log.e("GeoKitSource", "startForeground failed — degrading, not crashing", t)
+            android.util.Log.e("LoopSource", "startForeground failed — degrading, not crashing", t)
             stopSelf()
             START_NOT_STICKY
         }
@@ -112,7 +112,7 @@ class LocationForegroundService : Service() {
     }
 
     companion object {
-        private const val CHANNEL_ID = "geokit.location"
+        private const val CHANNEL_ID = "loop.location"
         private const val NOTIFICATION_ID = 4201
         private const val EXTRA_TITLE = "title"
         private const val EXTRA_BODY = "body"

@@ -10,7 +10,7 @@
 # Add any project specific keep options here:
 
 # ---------------------------------------------------------------------------
-# GeoKit keep rules
+# Loop keep rules
 #
 # R8 is enabled for release. Everything below is reached via JNI or reflection,
 # where R8's static reachability analysis cannot see the call site — so without
@@ -37,8 +37,8 @@
 # later (the TurboModule source) must be kept explicitly if they are resolved
 # by name rather than by a generated spec.
 
-# GeoKit TurboModule provider. The generated spec carries @DoNotStrip on its
+# Loop TurboModule provider. The generated spec carries @DoNotStrip on its
 # methods, but the concrete module and its package are resolved partly by name
 # through ReactModuleInfo, so keep both explicitly.
--keep class com.geokit.specs.** { *; }
--keep class com.geokit.source.** { *; }
+-keep class com.loop.specs.** { *; }
+-keep class com.loop.source.** { *; }

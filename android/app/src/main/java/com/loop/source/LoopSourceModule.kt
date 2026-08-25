@@ -1,4 +1,4 @@
-package com.geokit.source
+package com.loop.source
 
 import android.Manifest
 import android.content.ComponentCallbacks2
@@ -10,7 +10,7 @@ import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.module.annotations.ReactModule
-import com.geokit.specs.NativeGeoKitSourceSpec
+import com.loop.specs.NativeLoopSourceSpec
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
@@ -47,12 +47,12 @@ import org.json.JSONObject
  * The structural difference that remains: generation happens on a native thread
  * and never stops when JS is busy.
  */
-@ReactModule(name = NativeGeoKitSourceSpec.NAME)
-class GeoKitSourceModule(reactContext: ReactApplicationContext) :
-    NativeGeoKitSourceSpec(reactContext) {
+@ReactModule(name = NativeLoopSourceSpec.NAME)
+class LoopSourceModule(reactContext: ReactApplicationContext) :
+    NativeLoopSourceSpec(reactContext) {
 
     init {
-        android.util.Log.d("GeoKitSource", "module constructed, instance=${System.identityHashCode(this)}")
+        android.util.Log.d("LoopSource", "module constructed, instance=${System.identityHashCode(this)}")
         // Registered here rather than resolved by MainApplication reaching into
         // this module, so the module owns its own lifecycle: MainApplication
         // only needs to know a receiver MAY exist, never a concrete instance.
@@ -124,7 +124,7 @@ class GeoKitSourceModule(reactContext: ReactApplicationContext) :
 
     private val executor: ScheduledExecutorService =
         Executors.newSingleThreadScheduledExecutor { runnable ->
-            Thread(runnable, "geokit-native-source").apply { isDaemon = true }
+            Thread(runnable, "loop-native-source").apply { isDaemon = true }
         }
 
     private var future: ScheduledFuture<*>? = null
@@ -151,7 +151,7 @@ class GeoKitSourceModule(reactContext: ReactApplicationContext) :
 
     override fun start(scenarioJson: String, intervalMs: Double) {
         android.util.Log.d(
-            "GeoKitSource",
+            "LoopSource",
             "start() instance=${System.identityHashCode(this)} intervalMs=$intervalMs",
         )
         stop()
@@ -160,7 +160,7 @@ class GeoKitSourceModule(reactContext: ReactApplicationContext) :
             try {
                 buildAgents(JSONObject(scenarioJson))
             } catch (t: Throwable) {
-                android.util.Log.e("GeoKitSource", "bad scenario json", t)
+                android.util.Log.e("LoopSource", "bad scenario json", t)
                 emptyList()
             }
 
@@ -181,7 +181,7 @@ class GeoKitSourceModule(reactContext: ReactApplicationContext) :
                     } catch (t: Throwable) {
                         // A throw inside scheduleAtFixedRate silently cancels every
                         // future run — the source would die with no diagnostic.
-                        android.util.Log.e("GeoKitSource", "tick failed", t)
+                        android.util.Log.e("LoopSource", "tick failed", t)
                     }
                 },
                 period,
@@ -210,7 +210,7 @@ class GeoKitSourceModule(reactContext: ReactApplicationContext) :
             LocationForegroundService.start(ctx, title, body)
             true
         } catch (t: Throwable) {
-            android.util.Log.e("GeoKitSource", "foreground service start failed", t)
+            android.util.Log.e("LoopSource", "foreground service start failed", t)
             false
         }
     }
@@ -219,7 +219,7 @@ class GeoKitSourceModule(reactContext: ReactApplicationContext) :
         try {
             LocationForegroundService.stop(reactApplicationContext)
         } catch (t: Throwable) {
-            android.util.Log.e("GeoKitSource", "foreground service stop failed", t)
+            android.util.Log.e("LoopSource", "foreground service stop failed", t)
         }
     }
 
@@ -247,7 +247,7 @@ class GeoKitSourceModule(reactContext: ReactApplicationContext) :
 
     /** Credit returned. The next scheduled tick is now free to emit again. */
     override fun ackFixes() {
-        android.util.Log.d("GeoKitSource", "ack received")
+        android.util.Log.d("LoopSource", "ack received")
         awaitingAck = false
     }
 
@@ -268,10 +268,10 @@ class GeoKitSourceModule(reactContext: ReactApplicationContext) :
                 // Ground truth for the §8.4 re-measurement: every tick this
                 // branch is taken is a tick that would previously have queued
                 // an unbounded, discardable batch and now queues nothing.
-                android.util.Log.d("GeoKitSource", "tick skipped — awaiting ack")
+                android.util.Log.d("LoopSource", "tick skipped — awaiting ack")
                 return
             }
-            android.util.Log.w("GeoKitSource", "ack timeout — resuming emission without one")
+            android.util.Log.w("LoopSource", "ack timeout — resuming emission without one")
         }
         emitBatch()
     }
@@ -344,7 +344,8 @@ class GeoKitSourceModule(reactContext: ReactApplicationContext) :
                         Agent(
                             id = "e-%04d".format(n),
                             label = label,
-                            variant = n % VARIANT_COUNT,
+                            // Unique per entity — see MockSource.ts's identical fix.
+                            variant = n,
                             personaIndex = persona,
                             extra = extra,
                             route = route,
@@ -389,7 +390,7 @@ class GeoKitSourceModule(reactContext: ReactApplicationContext) :
                     Agent(
                         id = "e-%04d".format(n),
                         label = "#${i + 1}",
-                        variant = n % VARIANT_COUNT,
+                        variant = n,
                         personaIndex = persona,
                         extra = emptyMap(),
                         route = null,
@@ -565,7 +566,7 @@ class GeoKitSourceModule(reactContext: ReactApplicationContext) :
         // returns could slip through.
         awaitingAck = true
         awaitingSinceNanos = System.nanoTime()
-        android.util.Log.d("GeoKitSource", "emit seq=${batch.getInt("sequence")}")
+        android.util.Log.d("LoopSource", "emit seq=${batch.getInt("sequence")}")
 
         // Emitted from the source thread; the generated emitter marshals onto the
         // JS thread itself, so the timer never blocks waiting for JS.
@@ -574,7 +575,7 @@ class GeoKitSourceModule(reactContext: ReactApplicationContext) :
 
     companion object {
         const val SOURCE_ID = "native-turbo"
-        private const val PREFS = "geokit.state"
+        private const val PREFS = "loop.state"
         private const val KEY_SNAPSHOT = "snapshot"
 
         /** Self-heal window for a lost ack. See `maybeEmitBatch`. */
@@ -590,7 +591,7 @@ class GeoKitSourceModule(reactContext: ReactApplicationContext) :
          * Application only needs to know a receiver may exist, never hold a
          * concrete (and potentially stale) reference of its own.
          */
-        @Volatile private var current: GeoKitSourceModule? = null
+        @Volatile private var current: LoopSourceModule? = null
 
         /**
          * Entry point for `MainApplication.onTrimMemory`.
@@ -631,7 +632,6 @@ class GeoKitSourceModule(reactContext: ReactApplicationContext) :
         private const val TELEPORT_RATE = 0.002
         private const val BAD_ACCURACY_RATE = 0.01
         private const val DWELL_RATE = 0.02
-        private const val VARIANT_COUNT = 8
 
         private val PERSONA_SPEEDS = doubleArrayOf(1.4, 3.1, 6.0, 12.5, 3.6)
         private val PERSONA_WANDER = doubleArrayOf(300.0, 700.0, 1500.0, 3000.0, 1000.0)

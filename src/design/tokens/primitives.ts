@@ -64,46 +64,6 @@ export const palette = {
   },
 } as const;
 
-/**
- * Per-person identity colours.
- *
- * In a location-sharing app you recognise a friend by *their* colour, the way
- * Find My and Life360 work — not by which cohort a system put them in. Cohort
- * colouring answered a question the user never asked; identity colouring
- * answers "which dot is Meera" at a glance.
- *
- * Selection constraints, all of them load-bearing:
- *   - mutually distinguishable at ~14px on a busy basemap
- *   - none close to the SELF green or the STALE amber, or the signal breaks
- *   - none close to the violet zone fills
- *   - readable on both light and dark tiles
- *
- * Eight is a deliberate cap: beyond that, hues stop being tellable apart and
- * the name label on tap is doing the real work anyway.
- */
-export const identityPalette = {
-  light: [
-    '#2F80FF', // blue
-    '#D6249F', // magenta
-    '#0F9D8F', // teal
-    '#7A5AF8', // violet-blue
-    '#E0426B', // rose
-    '#0B84C4', // cerulean
-    '#5B5BD6', // indigo
-    '#B0288A', // plum
-  ],
-  dark: [
-    '#7FB4FF',
-    '#FF7AD1',
-    '#4FD8C4',
-    '#BFAEFF',
-    '#FF8FA9',
-    '#6EC6F5',
-    '#9CA2FF',
-    '#F58FD4',
-  ],
-} as const;
-
 /** 4pt base grid. Index = multiplier, so `space[4]` is 16pt. */
 export const space = {
   0: 0,

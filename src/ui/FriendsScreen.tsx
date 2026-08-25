@@ -18,11 +18,17 @@
  * whoever the source names next" — not a snapshot of who happened to be on
  * the roster at the moment you tapped it — so a fresh face joining mid-event
  * shows up without the user having to go re-check a box for them.
+ *
+ * COLOUR IS THE MAP'S IDENTITY KEY, READ HERE
+ *
+ * Each avatar uses the same `identityColor(variant)` mapping the map pins
+ * do, so a colour on the map and a name in this list are never presented
+ * apart from each other — this list IS the legend, which is why there is no
+ * separate floating one.
  */
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
-  Animated,
   FlatList,
   Pressable,
   StyleSheet,
@@ -32,12 +38,15 @@ import {
   type ListRenderItemInfo,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { scale, useTokens } from '@design';
+import { identityColor, scale, useTokens } from '@design';
+import { RotatingSearchHint } from './RotatingSearchHint';
 
 export interface FriendRosterEntry {
   id: string;
   label: string;
   participation: string;
+  /** Opaque per-entity discriminator the source assigns; indexes the identity palette. */
+  variant: number;
 }
 
 /** 'all' = everyone, including anyone the source names later. 'any' = exactly `selectedIds`. */
@@ -61,90 +70,6 @@ function initials(name: string): string {
   return (first + last).toUpperCase();
 }
 
-function sample<T>(items: readonly T[], count: number): T[] {
-  const pool = [...items];
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j] as T, pool[i] as T];
-  }
-  return pool.slice(0, Math.min(count, pool.length));
-}
-
-const HINT_ROTATE_MS = 2200;
-const HINT_ANIM_MS = 380;
-const HINT_ROW_H = 20;
-
-/**
- * A handful of real names cycling through the search box, top slot rolling
- * down and out as the next one rolls down into place — a hint at who is
- * searchable, not a static "Search friends" that says nothing about scale.
- * Purely decorative: it never touches `query`, and disappears the moment the
- * user starts typing so it can't be mistaken for input.
- */
-function RotatingSearchHint({ names }: { names: readonly string[] }) {
-  const tokens = useTokens();
-  const [index, setIndex] = useState(0);
-  const anim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    if (names.length < 2) {
-      return;
-    }
-    const id = setInterval(() => {
-      Animated.timing(anim, {
-        toValue: 1,
-        duration: HINT_ANIM_MS,
-        useNativeDriver: true,
-      }).start(() => {
-        setIndex(i => (i + 1) % names.length);
-        anim.setValue(0);
-      });
-    }, HINT_ROTATE_MS);
-    return () => clearInterval(id);
-  }, [names, anim]);
-
-  if (names.length === 0) {
-    return (
-      <Text style={[styles.hintText, { color: tokens.text.secondary }]}>Search friends</Text>
-    );
-  }
-
-  const current = names[index] as string;
-  const next = names[(index + 1) % names.length] as string;
-  const outT = anim.interpolate({ inputRange: [0, 1], outputRange: [0, HINT_ROW_H] });
-  const outO = anim.interpolate({ inputRange: [0, 1], outputRange: [1, 0] });
-  const inT = anim.interpolate({ inputRange: [0, 1], outputRange: [-HINT_ROW_H, 0] });
-  const inO = anim.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
-
-  return (
-    <View style={styles.hintRow}>
-      <Text style={[styles.hintText, { color: tokens.text.secondary }]}>Search </Text>
-      <View style={styles.hintNameClip}>
-        <Animated.Text
-          numberOfLines={1}
-          style={[
-            styles.hintText,
-            styles.hintAbs,
-            { color: tokens.text.secondary, opacity: outO, transform: [{ translateY: outT }] },
-          ]}
-        >
-          {current}
-        </Animated.Text>
-        <Animated.Text
-          numberOfLines={1}
-          style={[
-            styles.hintText,
-            styles.hintAbs,
-            { color: tokens.text.secondary, opacity: inO, transform: [{ translateY: inT }] },
-          ]}
-        >
-          {next}
-        </Animated.Text>
-      </View>
-    </View>
-  );
-}
-
 export function FriendsScreen({
   roster,
   mode,
@@ -165,15 +90,6 @@ export function FriendsScreen({
     return roster.filter(f => f.label.toLowerCase().includes(q));
   }, [roster, query]);
 
-  const hasRoster = roster.length > 0;
-  // Sampled once the roster has names, not reshuffled on every arrival —
-  // the hint should feel steady, not jittery as the source fills in.
-  const hintNames = useMemo(
-    () => sample(roster, 5).map(f => f.label),
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberately keyed on the roster's first arrival, not its ongoing growth
-    [hasRoster],
-  );
-
   const allSelected = mode === 'all';
   const visibleCount = allSelected ? roster.length : selectedIds.size;
 
@@ -183,13 +99,16 @@ export function FriendsScreen({
       return (
         <Pressable
           onPress={() => onToggle(item.id)}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked }}
+          accessibilityLabel={item.label}
           style={({ pressed }) => [
             styles.row,
             pressed && { backgroundColor: tokens.surface.sunken },
           ]}
         >
-          <View style={[styles.avatar, { backgroundColor: tokens.surface.sunken }]}>
-            <Text style={[styles.avatarText, { color: tokens.text.secondary }]}>
+          <View style={[styles.avatar, { backgroundColor: identityColor(tokens, item.variant) }]}>
+            <Text style={[styles.avatarText, { color: tokens.text.inverse }]}>
               {initials(item.label)}
             </Text>
           </View>
@@ -223,7 +142,13 @@ export function FriendsScreen({
   return (
     <View style={[styles.screen, { backgroundColor: tokens.surface.base }]}>
       <View style={[styles.header, { paddingTop: insets.top + scale.space[2] }]}>
-        <Pressable onPress={onClose} hitSlop={12} style={styles.back}>
+        <Pressable
+          onPress={onClose}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel="Back to map"
+          style={styles.back}
+        >
           <Text style={[styles.backGlyph, { color: tokens.text.primary }]}>‹</Text>
         </Pressable>
         <Text style={[styles.title, { color: tokens.text.primary }]}>Friends</Text>
@@ -244,10 +169,11 @@ export function FriendsScreen({
           style={[styles.search, { color: tokens.text.primary }]}
           autoCorrect={false}
           autoCapitalize="none"
+          accessibilityLabel="Search friends"
         />
         {query.length === 0 ? (
           <View style={styles.hintOverlay} pointerEvents="none">
-            <RotatingSearchHint names={hintNames} />
+            <RotatingSearchHint roster={roster} />
           </View>
         ) : null}
       </View>
@@ -264,6 +190,9 @@ export function FriendsScreen({
         ListHeaderComponent={
           <Pressable
             onPress={onToggleAll}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: allSelected }}
+            accessibilityLabel="Select all friends"
             style={({ pressed }) => [
               styles.row,
               styles.selectAllRow,
@@ -343,10 +272,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: scale.space[3],
     justifyContent: 'center',
   },
-  hintRow: { flexDirection: 'row', alignItems: 'center' },
-  hintText: { fontSize: scale.typography.size.md },
-  hintNameClip: { height: HINT_ROW_H, flex: 1, overflow: 'hidden' },
-  hintAbs: { position: 'absolute', left: 0, top: 0 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

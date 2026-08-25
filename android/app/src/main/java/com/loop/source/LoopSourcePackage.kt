@@ -1,11 +1,11 @@
-package com.geokit.source
+package com.loop.source
 
 import com.facebook.react.BaseReactPackage
 import com.facebook.react.bridge.NativeModule
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.module.model.ReactModuleInfo
 import com.facebook.react.module.model.ReactModuleInfoProvider
-import com.geokit.specs.NativeGeoKitSourceSpec
+import com.loop.specs.NativeLoopSourceSpec
 
 /**
  * ReactPackage for the native source provider.
@@ -27,17 +27,17 @@ import com.geokit.specs.NativeGeoKitSourceSpec
  * Architecture wants: modules are constructed lazily on first use via
  * `getModule`, so an unused provider costs nothing at startup.
  */
-class GeoKitSourcePackage : BaseReactPackage() {
+class LoopSourcePackage : BaseReactPackage() {
 
     override fun getModule(name: String, reactContext: ReactApplicationContext): NativeModule? =
-        if (name == NativeGeoKitSourceSpec.NAME) GeoKitSourceModule(reactContext) else null
+        if (name == NativeLoopSourceSpec.NAME) LoopSourceModule(reactContext) else null
 
     override fun getReactModuleInfoProvider(): ReactModuleInfoProvider = ReactModuleInfoProvider {
         mapOf(
-            NativeGeoKitSourceSpec.NAME to
+            NativeLoopSourceSpec.NAME to
                 ReactModuleInfo(
-                    /* name = */ NativeGeoKitSourceSpec.NAME,
-                    /* className = */ NativeGeoKitSourceSpec.NAME,
+                    /* name = */ NativeLoopSourceSpec.NAME,
+                    /* className = */ NativeLoopSourceSpec.NAME,
                     /* canOverrideExistingModule = */ false,
                     /* needsEagerInit = */ false,
                     /* isCxxModule = */ false,

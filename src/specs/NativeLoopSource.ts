@@ -190,10 +190,10 @@ export interface Spec extends TurboModule {
  */
 let cached: Spec | null | undefined;
 
-export function getNativeGeoKitSource(): Spec | null {
+export function getNativeLoopSource(): Spec | null {
   // `undefined` = not yet asked; `null` = asked and genuinely absent.
   if (cached === undefined) {
-    cached = TurboModuleRegistry.get<Spec>('NativeGeoKitSource') ?? null;
+    cached = TurboModuleRegistry.get<Spec>('NativeLoopSource') ?? null;
   }
   return cached;
 }

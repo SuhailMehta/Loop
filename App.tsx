@@ -1,5 +1,5 @@
 /**
- * GeoKit demo host.
+ * Loop demo host.
  *
  * Composition only — this file wires a source to a store to a surface, and owns
  * no domain logic. Which use cases appear on screen is the `children` of
@@ -8,9 +8,9 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AppState, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ThemeProvider, scale, useTokens } from '@design';
+import { AppState, BackHandler, StatusBar, StyleSheet, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ThemeProvider } from '@design';
 import { EntityStore } from '@geo/kernel/EntityStore';
 import { DEFAULT_KERNEL_CONFIG } from '@geo/kernel/types';
 import type { BBox } from '@geo/kernel/types';
@@ -47,6 +47,7 @@ import {
 } from '@kits/live-entities/scenario';
 import { VenueZonesLayers } from '@kits/venue-zones/VenueZonesLayers';
 import { EntitySheet } from './src/ui/EntitySheet';
+import { MapSearchBar } from './src/ui/MapSearchBar';
 import {
   FriendsScreen,
   type FriendFilterMode,
@@ -123,8 +124,6 @@ function registerProviders(): void {
 }
 
 function Demo() {
-  const insets = useSafeAreaInsets();
-
   const store = useMemo(() => new EntityStore(DEFAULT_KERNEL_CONFIG), []);
   /**
    * The demo only ever asks for the native bridge source. The JS source stays
@@ -161,6 +160,24 @@ function Demo() {
   const entityCount = SCENARIO_ENTITY_COUNT;
   /** The app has exactly two screens; a state flag is the whole router. */
   const [screen, setScreen] = useState<'map' | 'friends'>('map');
+
+  /**
+   * Hardware/gesture back on Android must return to the map, not exit the
+   * app. A hand-rolled screen flag gets this for free with a real navigator
+   * (it owns the back stack); here it has to be wired explicitly, or the
+   * Friends screen becomes a dead end that only a second app-switch escapes.
+   */
+  useEffect(() => {
+    if (screen !== 'friends') {
+      return;
+    }
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      setScreen('map');
+      return true;
+    });
+    return () => sub.remove();
+  }, [screen]);
+
   const [selected, setSelected] = useState<SelectedFeature | null>(null);
   /** Own position, kept in a ref for the distance readout without re-rendering. */
   const selfPosRef = useRef<{ lng: number; lat: number } | null>(null);
@@ -285,6 +302,7 @@ function Demo() {
               id: f.id,
               label: String(f.attributes?.label ?? f.id),
               participation: String(f.attributes?.participation ?? 'supporter'),
+              variant: Number(f.attributes?.variant ?? 0),
             });
             rosterDirtyRef.current = true;
           }
@@ -440,9 +458,8 @@ function Demo() {
         />
       </MapSurface>
 
-      <FriendsEntry
-        insetTop={insets.top}
-        count={roster.length}
+      <MapSearchBar
+        roster={roster}
         visibleCount={friendMode === 'all' ? roster.length : selectedFriendIds.size}
         onPress={() => setScreen('friends')}
       />
@@ -453,46 +470,10 @@ function Demo() {
         bib={selected ? BIB_BY_NAME[selected.label] ?? null : null}
         onClose={() => setSelected(null)}
       />
-
     </View>
   );
 }
 
-/**
- * Small entry point onto the Friends screen — a name and a count, nothing
- * that needs explaining. The list itself, filtering included, lives there.
- */
-function FriendsEntry({
-  insetTop,
-  count,
-  visibleCount,
-  onPress,
-}: {
-  insetTop: number;
-  count: number;
-  visibleCount: number;
-  onPress: () => void;
-}) {
-  const tokens = useTokens();
-  return (
-    <Pressable
-      onPress={onPress}
-      style={[
-        styles.friendsEntry,
-        {
-          top: insetTop + scale.space[2],
-          backgroundColor: tokens.surface.overlay,
-          borderColor: tokens.surface.border,
-        },
-      ]}
-    >
-      <Text style={[styles.friendsEntryLabel, { color: tokens.text.primary }]}>Friends</Text>
-      <Text style={[styles.friendsEntryCount, { color: tokens.text.secondary }]}>
-        {count === 0 ? '—' : `${visibleCount}/${count}`}
-      </Text>
-    </Pressable>
-  );
-}
 
 export default function App() {
   return (
@@ -507,21 +488,4 @@ export default function App() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  // `top` is supplied at render time from safe-area insets.
-  friendsEntry: {
-    position: 'absolute',
-    left: scale.space[3],
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: scale.space[2],
-    paddingHorizontal: scale.space[3],
-    paddingVertical: scale.space[2],
-    borderRadius: scale.radius.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  friendsEntryLabel: {
-    fontSize: scale.typography.size.sm,
-    fontWeight: scale.typography.weight.semibold,
-  },
-  friendsEntryCount: { fontSize: scale.typography.size.sm },
 });

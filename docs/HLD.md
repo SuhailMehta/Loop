@@ -1,7 +1,7 @@
 # High-Level Design — Real-Time Location Sharing
 
-**GeoKit** — a horizontal geospatial runtime for React Native, of which **Loop**, "share
-your live location during an event", is the first consumer.
+**Loop** — a horizontal geospatial runtime for React Native, of which "share your live
+location during an event" is the first consumer.
 
 ---
 

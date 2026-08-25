@@ -29,6 +29,15 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!--
+      android:enableOnBackInvokedCallback="false" forces the legacy
+      Activity.onBackPressed() dispatch path rather than Android 13+'s
+      predictive-back OnBackInvokedCallback. RN's BackHandler (App.tsx's
+      Friends-screen back navigation) hooks the legacy path only — with
+      predictive back left at its API-36 default of enabled, the system
+      consumes the gesture itself and BackHandler's JS listener never fires
+      at all, not even once.
+    -->
     <application
       android:name=".MainApplication"
       android:label="@string/app_name"
@@ -36,6 +45,7 @@
       android:roundIcon="@mipmap/ic_launcher_round"
       android:allowBackup="false"
       android:theme="@style/AppTheme"
+      android:enableOnBackInvokedCallback="false"
       android:usesCleartextTraffic="${usesCleartextTraffic}"
       android:supportsRtl="true">
       <activity
