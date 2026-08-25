@@ -77,23 +77,23 @@ export function RotatingSearchHint({
         duration: HINT_ANIM_MS,
         useNativeDriver: true,
       }).start(() => {
-        setIndex(i => (i + 1) % names.length);
+        // Reset the driven value BEFORE swapping which name is "current" —
+        // otherwise the newly-assigned text renders for one frame with the
+        // still-rotated-out transform from the finished animation, which is
+        // what showed up as a flicker between names.
         anim.setValue(0);
+        setIndex(i => (i + 1) % names.length);
       });
     }, HINT_ROTATE_MS);
     return () => clearInterval(id);
   }, [names, anim]);
 
-  if (names.length === 0) {
-    return <Text style={[styles.hintText, { color: tokens.text.secondary }]}>{emptyLabel}</Text>;
-  }
-
-  const current = names[index] as string;
-  const next = names[(index + 1) % names.length] as string;
   // Interpolations must stay referentially stable across renders — recreating
   // them on every `index` change forces the native driver to tear down and
   // re-attach the animated node graph on each cycle, which is what showed up
-  // as a jitter/flash rather than a smooth slide.
+  // as a jitter/flash rather than a smooth slide. Computed unconditionally,
+  // above the empty-roster return below, so the hook order never changes
+  // between a render with no names and one with names.
   const { outT, outO, inT, inO } = useMemo(
     () => ({
       outT: anim.interpolate({ inputRange: [0, 1], outputRange: [0, HINT_ROW_H] }),
@@ -104,6 +104,13 @@ export function RotatingSearchHint({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `anim` is a stable ref; recomputing per index defeats the memoization
     [anim],
   );
+
+  if (names.length === 0) {
+    return <Text style={[styles.hintText, { color: tokens.text.secondary }]}>{emptyLabel}</Text>;
+  }
+
+  const current = names[index] as string;
+  const next = names[(index + 1) % names.length] as string;
 
   return (
     <View style={[styles.hintRow, style]}>

@@ -13,12 +13,19 @@
  * multi-year product; the honest move is to deep-link to one that already
  * exists, using the cross-platform Google Maps URL so a single call works on
  * both platforms.
+ *
+ * This file is view only — `useEntitySheetViewModel` derives the distance,
+ * status text, accent colour and staleness warning, and owns the one real
+ * side effect (opening a maps app). That split is what makes the distance
+ * formatting and URL construction testable with plain Jest, with no sheet
+ * rendered and no `Linking` call made.
  */
 
 import React from 'react';
-import { Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { identityColor, scale, useTokens } from '@design';
+import { scale } from '@design';
+import { useEntitySheetViewModel } from './useEntitySheetViewModel';
 
 export interface SelectedEntity {
   id: string;
@@ -43,99 +50,15 @@ interface EntitySheetProps {
   onClose: () => void;
 }
 
-/** Haversine, duplicated here rather than importing from the kernel. */
-function distanceM(lng1: number, lat1: number, lng2: number, lat2: number): number {
-  const R = 6371008.8;
-  const toRad = Math.PI / 180;
-  const dLat = (lat2 - lat1) * toRad;
-  const dLng = (lng2 - lng1) * toRad;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * toRad) * Math.cos(lat2 * toRad) * Math.sin(dLng / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(a));
-}
-
-
-/**
- * Distance readout.
- *
- * Rounded by magnitude, because false precision is worse than none: "1712.2 km"
- * implies a certainty that a straight-line estimate between two GPS fixes does
- * not have, and nobody meeting a friend needs a decimetre.
- */
-function formatDistance(m: number): string {
-  if (m < 1000) {
-    return `${Math.round(m / 10) * 10} m away`;
-  }
-  if (m < 100_000) {
-    return `${(m / 1000).toFixed(1)} km away`;
-  }
-  // Far enough that "away" is the wrong frame entirely — the user is not at
-  // this event, and directions would route them across the country.
-  return `${Math.round(m / 1000)} km away — not at this event`;
-}
-
-/**
- * Opens directions in a maps app.
- *
- * The `google.com/maps/dir/?api=1` form is the documented cross-platform URL:
- * Android hands it to the Google Maps app via intent filter, iOS opens the app
- * if installed and Safari otherwise. One call, no platform branch, no failure
- * mode where nothing happens.
- *
- * `travelmode=walking` because these are people at an event, metres apart —
- * driving directions between two spectators in the same park would be absurd.
- */
-async function openDirections(lat: number, lng: number, label: string): Promise<void> {
-  const destination = `${lat},${lng}`;
-  const url =
-    `https://www.google.com/maps/dir/?api=1&destination=${destination}` +
-    `&travelmode=walking&destination_place_id=${encodeURIComponent(label)}`;
-
-  try {
-    await Linking.openURL(url);
-  } catch {
-    // Last resort: the platform's own maps handler.
-    const fallback = Platform.select({
-      ios: `maps://?daddr=${destination}`,
-      default: `geo:${destination}?q=${destination}(${encodeURIComponent(label)})`,
-    });
-    try {
-      await Linking.openURL(fallback);
-    } catch {
-      // Nothing can handle a map intent. Silent is correct — the sheet stays
-      // open and the user still has the position on screen.
-    }
-  }
-}
-
 export function EntitySheet({ entity, selfPosition, bib, onClose }: EntitySheetProps) {
-  const tokens = useTokens();
   const insets = useSafeAreaInsets();
+  const { tokens, view, openDirections } = useEntitySheetViewModel(entity, selfPosition, bib);
 
-  if (!entity) {
+  if (!entity || !view) {
     return null;
   }
 
-  const isSelf = entity.isSelf;
-  const distance =
-    selfPosition && !isSelf
-      ? formatDistance(distanceM(selfPosition.lng, selfPosition.lat, entity.lng, entity.lat))
-      : null;
-
-  // Same colour the pin and the Friends list row use for this person —
-  // identityColor(variant) is the one mapping every surface reads from.
-  const accent = isSelf ? tokens.map.entity.self : identityColor(tokens, entity.variant);
-
-  // Spelled out in words, because a colour alone does not tell a user why this
-  // person is moving at 3.6 m/s down the middle of a park.
-  const status = isSelf
-    ? 'You'
-    : entity.participation === 'racer'
-      ? bib
-        ? `Racing · Bib ${bib}`
-        : 'Racing'
-      : 'Supporting';
+  const { accent, status, distance, warning } = view;
 
   return (
     <View
@@ -164,9 +87,9 @@ export function EntitySheet({ entity, selfPosition, bib, onClose }: EntitySheetP
       </View>
 
       {/* Directions to yourself would be nonsense, so the action is suppressed. */}
-      {isSelf ? null : (
+      {entity.isSelf ? null : (
         <Pressable
-          onPress={() => openDirections(entity.lat, entity.lng, entity.label)}
+          onPress={openDirections}
           style={({ pressed }) => [
             styles.action,
             { backgroundColor: pressed ? tokens.accent.strong : tokens.accent.base },
@@ -178,10 +101,8 @@ export function EntitySheet({ entity, selfPosition, bib, onClose }: EntitySheetP
 
       {/* Staleness is surfaced in words, not just colour — a fading pin is easy
           to miss, and "last seen" is the difference between waiting and moving on. */}
-      {entity.freshness === 'stale' || entity.freshness === 'dead' ? (
-        <Text style={[styles.warning, { color: tokens.status.warn }]}>
-          {entity.freshness === 'dead' ? 'Signal lost' : 'Position may be out of date'}
-        </Text>
+      {warning ? (
+        <Text style={[styles.warning, { color: tokens.status.warn }]}>{warning}</Text>
       ) : null}
     </View>
   );
