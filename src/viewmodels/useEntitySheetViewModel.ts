@@ -9,7 +9,7 @@
 import { useCallback } from 'react';
 import { Linking, Platform } from 'react-native';
 import { identityColor, useTokens, type SemanticTokens } from '@design';
-import type { SelectedEntity } from './EntitySheet';
+import type { SelectedEntity } from '../ui/EntitySheet';
 
 /** Haversine, duplicated here rather than importing from the kernel. */
 export function distanceM(lng1: number, lat1: number, lng2: number, lat2: number): number {

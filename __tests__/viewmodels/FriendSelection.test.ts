@@ -4,7 +4,7 @@ import {
   toggleFriend,
   visibleFriendCount,
   visibleFriendIds,
-} from './FriendSelection';
+} from '../../src/viewmodels/FriendSelection';
 
 describe('friendSelection', () => {
   test('starts as "all", selecting nobody explicitly', () => {

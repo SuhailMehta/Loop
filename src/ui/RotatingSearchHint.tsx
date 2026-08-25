@@ -117,7 +117,14 @@ export function RotatingSearchHint({
       {prefix ? (
         <Text style={[styles.hintText, { color: tokens.text.secondary }]}>{prefix}</Text>
       ) : null}
-      <View style={styles.hintNameClip}>
+      {/*
+        renderToHardwareTextureAndroid forces this clip onto its own layer.
+        Without it, Android's overflow:hidden does not reliably clip a child
+        whose transform is driven by the native animated driver — the moving
+        text was escaping the pill entirely instead of being cropped at its
+        edge, which is what showed up as a flicker/ghost above the search bar.
+      */}
+      <View style={styles.hintNameClip} renderToHardwareTextureAndroid>
         <Animated.Text
           numberOfLines={1}
           style={[
@@ -147,5 +154,9 @@ const styles = StyleSheet.create({
   hintRow: { flexDirection: 'row', alignItems: 'center', flexShrink: 1 },
   hintText: { fontSize: scale.typography.size.md },
   hintNameClip: { height: HINT_ROW_H, flex: 1, overflow: 'hidden' },
-  hintAbs: { position: 'absolute', left: 0, top: 0 },
+  // `right: 0` pins this to the clip's full width rather than the text's own
+  // intrinsic width — without it, Android has to remeasure/relayout the box
+  // whenever the name's length changes (e.g. "Riya" -> "Om"), which showed up
+  // as a flicker mid-animation instead of a plain glyph swap.
+  hintAbs: { position: 'absolute', left: 0, right: 0, top: 0 },
 });

@@ -4,7 +4,7 @@ import {
   distanceM,
   formatDistance,
   statusText,
-} from './useEntitySheetViewModel';
+} from '../../src/viewmodels/useEntitySheetViewModel';
 
 describe('distanceM', () => {
   test('is zero for identical points', () => {

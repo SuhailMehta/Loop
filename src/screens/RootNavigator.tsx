@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { useMapViewModel } from './useMapViewModel';
+import { useMapViewModel } from '../viewmodels/useMapViewModel';
 import { MapScreen } from './MapScreen';
 import { FriendsScreen } from './FriendsScreen';
 

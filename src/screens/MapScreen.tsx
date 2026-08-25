@@ -15,7 +15,7 @@ import { LiveEntitiesLayers } from '@kits/live-entities/LiveEntitiesLayers';
 import { VenueZonesLayers } from '@kits/venue-zones/VenueZonesLayers';
 import { EntitySheet } from '../ui/EntitySheet';
 import { MapSearchBar } from '../ui/MapSearchBar';
-import type { MapViewModel } from './useMapViewModel';
+import type { MapViewModel } from '../viewmodels/useMapViewModel';
 
 export function MapScreen({ vm }: { vm: MapViewModel }) {
   return (

@@ -44,8 +44,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { identityColor, scale, useTokens } from '@design';
 import { RotatingSearchHint } from '../ui/RotatingSearchHint';
-import type { FriendRosterEntry, FriendFilterMode } from './FriendSelection';
-import { initials, useFriendsViewModel } from './useFriendsViewModel';
+import type { FriendRosterEntry, FriendFilterMode } from '../viewmodels/FriendSelection';
+import { initials, useFriendsViewModel } from '../viewmodels/useFriendsViewModel';
 
 export interface FriendsScreenProps {
   roster: readonly FriendRosterEntry[];

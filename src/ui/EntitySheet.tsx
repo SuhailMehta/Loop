@@ -25,7 +25,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scale } from '@design';
-import { useEntitySheetViewModel } from './useEntitySheetViewModel';
+import { useEntitySheetViewModel } from '../viewmodels/useEntitySheetViewModel';
 
 export interface SelectedEntity {
   id: string;
