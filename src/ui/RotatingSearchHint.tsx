@@ -90,10 +90,20 @@ export function RotatingSearchHint({
 
   const current = names[index] as string;
   const next = names[(index + 1) % names.length] as string;
-  const outT = anim.interpolate({ inputRange: [0, 1], outputRange: [0, HINT_ROW_H] });
-  const outO = anim.interpolate({ inputRange: [0, 1], outputRange: [1, 0] });
-  const inT = anim.interpolate({ inputRange: [0, 1], outputRange: [-HINT_ROW_H, 0] });
-  const inO = anim.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
+  // Interpolations must stay referentially stable across renders — recreating
+  // them on every `index` change forces the native driver to tear down and
+  // re-attach the animated node graph on each cycle, which is what showed up
+  // as a jitter/flash rather than a smooth slide.
+  const { outT, outO, inT, inO } = useMemo(
+    () => ({
+      outT: anim.interpolate({ inputRange: [0, 1], outputRange: [0, HINT_ROW_H] }),
+      outO: anim.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }),
+      inT: anim.interpolate({ inputRange: [0, 1], outputRange: [-HINT_ROW_H, 0] }),
+      inO: anim.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `anim` is a stable ref; recomputing per index defeats the memoization
+    [anim],
+  );
 
   return (
     <View style={[styles.hintRow, style]}>
