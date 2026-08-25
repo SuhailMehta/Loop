@@ -10,7 +10,7 @@
  */
 
 import { useMemo, useState } from 'react';
-import type { FriendRosterEntry, FriendFilterMode } from './FriendSelection';
+import type { FriendRosterEntry, FriendFilterMode } from '../models/FriendSelection';
 
 export function filterRoster(
   roster: readonly FriendRosterEntry[],

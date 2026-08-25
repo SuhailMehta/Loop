@@ -1,5 +1,5 @@
 import { filterRoster, initials } from '../../src/viewmodels/useFriendsViewModel';
-import type { FriendRosterEntry } from '../../src/viewmodels/FriendSelection';
+import type { FriendRosterEntry } from '../../src/models/FriendSelection';
 
 const roster: FriendRosterEntry[] = [
   { id: 'a', label: 'Nisha Patel', participation: 'racer', variant: 0 },

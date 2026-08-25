@@ -52,17 +52,17 @@ import {
   SCENARIO_ENTITY_COUNT,
   SCENARIO_ZOOM,
 } from '@kits/live-entities/scenario';
-import type { FriendRosterEntry } from './FriendSelection';
+import type { FriendRosterEntry } from '../models/FriendSelection';
 import {
   INITIAL_FRIEND_SELECTION,
   toggleAllFriends as applyToggleAll,
   toggleFriend as applyToggleFriend,
   visibleFriendCount,
   visibleFriendIds,
-} from './FriendSelection';
-import { registerProviders } from './RegisterProviders';
+} from '../models/FriendSelection';
+import { registerProviders } from '../bootstrap/RegisterProviders';
 
-export type { FriendFilterMode, FriendRosterEntry } from './FriendSelection';
+export type { FriendFilterMode, FriendRosterEntry } from '../models/FriendSelection';
 
 /** Settled decisions, not chrome — see the note at each one's original site in git history. */
 const CONFIG = {
