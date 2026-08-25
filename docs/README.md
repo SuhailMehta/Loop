@@ -5,6 +5,10 @@
 This document explains the design in plain terms. [HLD.md](./HLD.md) and
 [LLD.md](./LLD.md) hold the detail.
 
+|                                    Map                                    |                              Selected friend                             |                                Friends list                               |
+| :------------------------------------------------------------------------: | :------------------------------------------------------------------------: | :-------------------------------------------------------------------------: |
+| ![Live map with identity-coloured pins and haloes](./screenshots/map.png) | ![A tapped pin's name, highlight ring and detail sheet](./screenshots/selected.png) | ![Friends list with matching avatar colours and all/any filter](./screenshots/friends.png) |
+
 ---
 
 ## The problem
