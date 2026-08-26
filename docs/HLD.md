@@ -558,7 +558,6 @@ must not treat as an afterthought.
   findable but not followed.
 - **Ephemeral by default.** The server holds a short ring buffer, not a history table.
   Trails are client-side only. Retention is measured in minutes.
-- **Rotating per-session pseudonyms** on the wire rather than stable user ids.
 
 ---
 
