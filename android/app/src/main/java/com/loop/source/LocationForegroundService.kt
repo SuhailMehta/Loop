@@ -10,6 +10,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import com.loop.LoopLog
 
 /**
  * Keeps location tracking alive when the app is not in the foreground.
@@ -33,6 +34,8 @@ import androidx.core.app.NotificationCompat
  * inert.
  */
 class LocationForegroundService : Service() {
+
+    private val log = LoopLog("LocationForegroundService")
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -60,7 +63,7 @@ class LocationForegroundService : Service() {
             startForeground(NOTIFICATION_ID, buildNotification(title, body))
             START_REDELIVER_INTENT
         } catch (t: Throwable) {
-            android.util.Log.e("LoopSource", "startForeground failed — degrading, not crashing", t)
+            log.e("startForeground failed — degrading, not crashing", t)
             stopSelf()
             START_NOT_STICKY
         }

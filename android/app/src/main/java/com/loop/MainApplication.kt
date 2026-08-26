@@ -6,8 +6,8 @@ import com.facebook.react.ReactApplication
 import com.facebook.react.ReactHost
 import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
-import com.loop.source.LoopSourceModule
-import com.loop.source.LoopSourcePackage
+import com.loop.source.bridge.LoopSourceModule
+import com.loop.source.bridge.LoopSourcePackage
 
 class MainApplication : Application(), ReactApplication {
 
