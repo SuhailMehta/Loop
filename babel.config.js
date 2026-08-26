@@ -16,9 +16,5 @@ module.exports = {
         },
       },
     ],
-    // MUST stay last. Reanimated 4 moved its babel plugin into
-    // react-native-worklets; the old 'react-native-reanimated/plugin' entry is
-    // gone and silently does nothing if copied from older tutorials.
-    'react-native-worklets/plugin',
   ],
 };
